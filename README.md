@@ -5,25 +5,24 @@ library(stringr)
 
 setwd("C:/Users/Administrator/Desktop/SPL")
 
-######################################################################################
-## Load dataset##
+# Load dataset
 data = read.csv("data_reg.csv", 
                 header = TRUE, sep = ",")
 
-## Select 1992.1993.2005.2006 data##
+# Select 1992.1993.2005.2006 data##
 data = subset(data,
               year %in% c(1992, 1993, 2005, 2006),
               select = c(Code,realGDP, lightarea, year))
 names(data) = c("Code", "GDP", "light", "year")
 
-## Reshape data##
+# Reshape data##
 wide = reshape(data, 
                v.names = c('light', "GDP"), 
                idvar = "Code",
                timevar = "year", 
                direction = "wide")
 
-## Calculate GDP & Lights growth##
+# Calculate GDP & Lights growth##
 log.GDP.9293  = log(apply(wide[, c("GDP.1992", "GDP.1993")], 1, mean))
 log.GDP.0506  = log(apply(wide[, c("GDP.2005", "GDP.2006")], 1, mean))
 wide$GDP.grow = 100*((log.GDP.0506)-(log.GDP.9293)) / (2006-1993)
@@ -33,25 +32,25 @@ log.lights.0506 = log(apply(wide[, c("light.2005", "light.2006")], 1, mean))
 wide$light.grow = 100*((log.lights.0506)-(log.lights.9293)) / (2006-1993)
 
 
-## Get final dataset##
+# Get final dataset##
 data.total = wide[, c("Code", "GDP.grow", "light.grow")]
 data.total = data.total [complete.cases(data.total ), ]
 data.total = data.total [is.infinite(data.total$GDP.grow)== F &
                            is.infinite(data.total$light.grow) == F, ]
 row.names (data.total) = data.total$Code
 
-## Regress growth of lights on growth of gdp##
+# Regress growth of lights on growth of gdp##
 
 model = lm(GDP.grow~light.grow, data = data.total)
 summary (model)
 
-## Test Regression Model##
+# Test Regression Model##
 avPlots (model, ask = FALSE)
 influencePlot(model, 
               main = "Influence Plot",
               sub  = "Circle size is proportional to Cook's distance")
 
-##omit high influencial point##
+#omit high influencial point
 data.total = data.total[data.total$Code!="GNQ" &
                           data.total$Code!="ATA" &
                           data.total$Code!="TUV", ]
@@ -60,7 +59,6 @@ model = lm(GDP.grow~light.grow, data = data.total)
 summary(model)
 
 
-#############
 SCI = read.csv("SCI1.csv", header = TRUE, sep = ",")
 SCI = SCI[complete.cases(SCI), ]
 SCI = SCI[, c(4,5)]
